@@ -8,7 +8,7 @@
 use strict;
 
 use Test;
-BEGIN { plan tests => 30, todo => [] }
+BEGIN { plan tests => 37, todo => [] }
 
 use Data::CTable;
 use Data::CTable::Script;
@@ -42,6 +42,7 @@ my $People1 = Data::CTable->new("${TestDir}people.tabs.txt") and ok(1) or die;
 ## Now for tests 2..onward, run unit-tests of specific feature
 ## groups...
 
+ok(test_unbalanced_quote());    ## " in the middle of a file
 ok(test_formats());		## Testing file formats
 ok(test_join());		## join
 ok(test_join2());		## join using code like one of our examples
@@ -1934,3 +1935,17 @@ sub hasheq
 		return(0);
 	}
 }
+
+sub test_unbalanced_quote
+{
+	ok(my $People = Data::CTable->new({ _IgnoreQuotes => 1 }, "${TestDir}people.unbalanced.quote.txt") or die);
+	ok($People->row_list(0)->[0], 'Jay');
+	ok($People->row_list(0)->[1], 'Hannah');
+	ok($People->row_list(0)->[2], '12" is 1 foot');
+	ok($People->row_list(0)->[3], '37');
+	ok($People->row_list(0)->[4], 'NE');
+	return 1;
+}
+
+
+

@@ -4463,6 +4463,8 @@ have been written, if any, and then restrict its permissions:
 
 	     _HeaderRow     => 0,     ## No header row (_FieldList required!)
 
+	     _IgnoreQuotes  => 0,     ## Load files with unbalanced quotes
+
 	     _LineEnding    => undef, ## Text line ending (undef means guess)
 	     _FDelimiter    => undef, ## Field delimiter (undef means guess)
 
@@ -4517,6 +4519,10 @@ not expect a header row showing the field names in the file.  Instead,
 it assumes that the _FieldList gives those (and _FieldList must
 therefore be specified either as a parameter or an existing parameter
 in the object).
+
+_IgnoreQuotes is false by default. If true then we'll ignore quotes in
+the file upon import, which makes the loading of files with unbalanced
+quotes possible.
 
 _MaxRecords (optional) is an upper limit on the number of fields to
 import.  If not specified, or zero, or undef, then there is no limit;
@@ -4618,9 +4624,9 @@ sub read_file		## Read, ignoring cacheing
 	my $this		= shift;
 	my $Params		= (@_ == 1 ? {_FileName => $_[0]} : {@_});
 
-	my($FileName, $FieldList, $MaxRecords, $LineEnding, $FDelimiter, $ReturnMap, $ReturnEncoding, $MacRomanMap, $HeaderRow) 
+	my($FileName, $FieldList, $MaxRecords, $LineEnding, $FDelimiter, $ReturnMap, $ReturnEncoding, $MacRomanMap, $HeaderRow, $IgnoreQuotes) 
 	    = map {$this->getparam($Params, $_)} 
-	qw(_FileName  _FieldList  _MaxRecords  _LineEnding  _FDelimiter  _ReturnMap  _ReturnEncoding  _MacRomanMap  _HeaderRow);
+	qw(_FileName  _FieldList  _MaxRecords  _LineEnding  _FDelimiter  _ReturnMap  _ReturnEncoding  _MacRomanMap  _HeaderRow  _IgnoreQuotes);
 
 	my $Success;
 
@@ -4788,12 +4794,18 @@ sub read_file		## Read, ignoring cacheing
 		## Protect delimiters inside fields.
 		s/\000/$ZeroMarker/go;					## Preserve genuine ASCII 0 chars.
 		my $InQuote = 0;						## Initialize InQuote flag to zero.
-		s/(\")|($FDelimiter)/					## Replace delimiters inside quotes with ASCII 0 ...
-			($1 ? do{$InQuote^=1; $1} : 		##  ... if quote char, toggle InQuote flag
-			 ($InQuote ? "\000" : $2))/eg;		##  ... if delimiter, InQuote sez whether to replace or retain.
+		unless ($IgnoreQuotes) {
+			s/(\")|($FDelimiter)/					## Replace delimiters inside quotes with ASCII 0 ...
+				($1 ? do{$InQuote^=1; $1} : 		##  ... if quote char, toggle InQuote flag
+				($InQuote ? "\000" : $2))/eg;		##  ... if delimiter, InQuote sez whether to replace or retain.
+		}
 
 		## Split record into fields, then clean each field.
 
+		my $regex = qr/$FDelimiter/;
+		unless ($IgnoreQuotes) {
+			$regex = qr/\"?$FDelimiter\"?/;
+		}
 		s/^\"//; s/\"$//;  						## Kill leading, trailing quotes surrounding each record
 		my @FieldVals = 
 			map 
@@ -4805,7 +4817,7 @@ sub read_file		## Read, ignoring cacheing
 				 s/$RetRegex/\n/g if $ReturnMap;## Restore return characters that were coded as ASCII 11 (^K)
 			 }
 			 $_;}								## Return field val after above mods.
-		split(/\"?$FDelimiter\"?/, $_);			## Split on delimiters, killing optional surrounding quotes at same time.
+		split(/$regex, $_);			## Split on delimiters, killing optional surrounding quotes at same time.
 		
 		## Put the data into the vectors
 		foreach (@$FieldNums)
@@ -5122,6 +5134,7 @@ sub read_file_or_cache	## Read, cacheing if possible
 						 _LineEnding	=>	$this->{_LineEnding},
 						 _FDelimiter	=>	$this->{_FDelimiter},
 						 _HeaderRow		=>	$this->{_HeaderRow },
+						 _IgnoreQuotes	=> $this->{_IgnoreQuotes},
 						 _Subset		=>	$this->{_Subset    },
 						 _Newline		=>	"\n",
 						 )};
