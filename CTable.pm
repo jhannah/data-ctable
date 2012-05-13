@@ -5,7 +5,7 @@ use strict;
 
 package Data::CTable;
 
-use vars qw($VERSION);				$VERSION = '1.02';
+use vars qw($VERSION);				$VERSION = '1.03';
 
 =pod
 

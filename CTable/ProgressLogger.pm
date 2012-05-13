@@ -5,7 +5,7 @@ use strict;
 
 package Data::CTable::ProgressLogger;
 
-use vars qw($VERSION);				$VERSION = '0.1';
+use vars qw($VERSION);				$VERSION = '1.03';
 
 =pod
 
