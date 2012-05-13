@@ -3222,6 +3222,40 @@ PROGRESS MESSAGES
             ## Later...
             my $t = Data::CTable::Silent->new(...);
 
+Rejecting or reporting on groups of records and continuing
+    Use utility methods omit_warn() and omit_note() to conditionally omit
+    some records from a table and warn (or "note") if any were affected.
+
+    Use select_extract() to do the same thing but without actually removing
+    the extracted records from the table, and restoring the original
+    selection before select_extract was called.
+
+    If you supply a file name as the 4th argument, the omitted records will
+    be extracted to a file for later reference.
+
+    If you supply a message prefix as the 5th argument, a string other than
+    "WARNING" or "Note" may be specified.
+
+            # Reject with a progress message prefixed by "WARNING:"
+
+            $t->omit_warn(FirstName => sub{!length($_)}, "First name is empty");
+
+                    Mon Aug 23 08:24:15 2004 WARNING: Omitting 2 of 78243 records (now 78241): First name is empty.
+
+            # Reject with a progress message prefixed by "Note:", with output to a file
+
+            $t->omit_note(FirstName => sub{!length($_)}, "First name is empty", "empty.names.txt");
+
+                    Mon Aug 23 08:24:15 2004 Note: Omitting 2 of 78243 records (now 78241): First name is empty.
+                    Mon Aug 23 08:24:15 2004 Writing bad.firstname.txt...
+                    Mon Aug 23 08:24:15 2004 Wrote   bad.firstname.txt.
+
+            # Extract some items, leaving original selection intact
+
+            $t->select_extract(FirstName => sub{!length($_)}, "First name is empty", "empty.names.txt");
+
+                    Mon Aug 23 08:24:15 2004 Note: Extracting 2 of 78243 records: First name is empty.
+
 DEBUGGING / DUMPING
             ## Print some debugging output...
 

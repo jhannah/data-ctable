@@ -1,5 +1,11 @@
 Revision history for Data::CTable
 	
+1.02  2004-11-10
+
+	- Fixed a few minor bugs and corrected a few comments.
+	
+	- Added omit_warn and its related utility methods.
+
 1.01  2002-09-17
 
 	- Suppressed col_rename warning when name is unchanged.

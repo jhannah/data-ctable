@@ -5,7 +5,7 @@ use strict;
 
 package Data::CTable;
 
-use vars qw($VERSION);				$VERSION = '1.01';
+use vars qw($VERSION);				$VERSION = '1.02';
 
 =pod
 
@@ -1253,7 +1253,7 @@ sub fieldlist_set_internal
 		$this->fieldlist_check($FieldList);
 
 		## Set the custom list
-		$this->{_FieldList} = $FieldList;
+		$this->{_FieldList} = [@$FieldList];
 		
 		## In "force" mode, remove any non-listed columns.
 		$this->fieldlist_truncate() if ($Force);
@@ -4700,7 +4700,10 @@ sub read_file		## Read, ignoring cacheing
 
 		## Split header row into field names, removing optional "" around each at the same time.
 		$IncomingFields = [split(/\"?$FDelimiter\"?/, $_)];
-		
+
+		## Strip any leading and/or trailing control chars or spaces from field names in header.
+		$IncomingFields = [map {s{(?:\A[\x00-\x20]+)|(?:[\x00-\x20]+\Z)}{}g; $_;} @$IncomingFields];
+
 	}
 	else
 	{
@@ -4758,7 +4761,7 @@ sub read_file		## Read, ignoring cacheing
 	## ascii zero characters in the input text (a rare occurrence
 	## anyway).
 
-	my $ZeroMarker = "\001ASCII_ZERO" . time() . "\001";
+	my $ZeroMarker = "\001ASCII_ZERO\001";
 	
 	## Now ready to go through the file line-by-line (record-by-record)
 
@@ -4798,7 +4801,7 @@ sub read_file		## Read, ignoring cacheing
 			 {
 				 s/\"\"/\"/g;					## Restore Merge format's quoted double-quotes. ("" ==> ")
 				 s/\000/$FDelimiter/g;			## Restore delimiters inside fields
-				 s/$ZeroMarker/\000/go;			## Restore preserved ASCII 0 chars.
+				 s/\Q$ZeroMarker\E/\000/go;		## Restore preserved ASCII 0 chars.
 				 s/$RetRegex/\n/g if $ReturnMap;## Restore return characters that were coded as ASCII 11 (^K)
 			 }
 			 $_;}								## Return field val after above mods.
@@ -4966,8 +4969,10 @@ sub read_file_or_cache	## Read, cacheing if possible
 		(((stat($CacheFileName))[9]) > ((stat($FileName))[9]))    )
 	{
 		$this->progress("Thawing $CacheFileName...");
-		$Data = &retrieve($CacheFileName);
-		
+		eval 
+		{
+			$Data = &retrieve($CacheFileName);
+		};
 		$this-warn("Cache restore from $CacheFileName failed: $!"), unlink($CacheFileName)
 			unless defined ($Data);
 	}
@@ -5044,6 +5049,18 @@ sub read_file_or_cache	## Read, cacheing if possible
 		delete $Data->{_Newline};
 		@$this{keys %$Data} = values %$Data;
 
+		## If more records were written to the cache than are now
+		## desired, warn and truncate.  This is potentially not good
+		## because in the reverse case (reading/saving the first time
+		## with a limit then re-reading with no limit) would not be
+		## caught.
+
+		if ($this->{_MaxRecords} && $this->length() > $this->{_MaxRecords})
+		{
+			$this->warn("Truncating length of cached table (@{[$this->length()]}) to requested length (@{[$this->{_MaxRecords}]})");
+			$this->length($this->{_MaxRecords});
+		}
+		
 		## Set the file name to the name of the original (not the
 		## cache) file, just as read() would have done.
 
@@ -5487,8 +5504,12 @@ sub write_cache
 	
 	$this->progress("Storing $CacheFileName...");
 	
-	my $Success = nstore($Data, $CacheFileName);
-	
+	my $Success;
+	eval 
+	{
+		$Success = nstore($Data, $CacheFileName);
+	};		
+
 	$this->progress("Stored  $CacheFileName.") if $Success;
 	
   done:
@@ -5700,7 +5721,7 @@ sub write_file		## Just write; don't worry about cacheing
 					$LineEndQuote . 
 					$LineEnding);
 		
-		## Maybe convert entire line (all records) Mac to ISO before writing it.
+		## Maybe convert entire line (all records) ISO to Mac before writing it.
 		&ISORoman8859_1ToMacRoman(\ $Line) if $DoMacMapping;
 		
 		$OutFile->print($Line) if $HeaderRow;
@@ -5712,7 +5733,7 @@ sub write_file		## Just write; don't worry about cacheing
 	
 	my $WroteProg;
 	my $TotalLen		= @$Selection+0;
-	my $RecordsToWrite	= ($MaxRecords ? min($this, $MaxRecords, $TotalLen) : $TotalLen);
+	my $RecordsToWrite	= ($MaxRecords ? min($MaxRecords, $TotalLen) : $TotalLen);
 	my $RecordsWritten	= 0;
 
 	foreach my $i (@$Selection)
@@ -5876,7 +5897,7 @@ sub format	## use Data::ShowTable to format the table in a pretty way.
 						   @$FieldList];
 
 	my $TotalLen		= @$Selection+0;
-	my $RecordsToWrite	= ($MaxRecords ? min($this, $MaxRecords, $TotalLen) : $TotalLen);
+	my $RecordsToWrite	= ($MaxRecords ? min($MaxRecords, $TotalLen) : $TotalLen);
 
 	## The row-yielder subroutine and its private state variables.
 	my $SelNum			= 0;
@@ -7098,6 +7119,121 @@ sub warn
 	my ($msg)		= @_;
 
 	return($this->progress_default("WARNING: $msg"));
+}
+
+=pod
+
+=head1 Rejecting or reporting on groups of records and continuing
+
+Use utility methods omit_warn() and omit_note() to conditionally omit
+some records from a table and warn (or "note") if any were affected.
+
+Use select_extract() to do the same thing but without actually
+removing the extracted records from the table, and restoring the
+original selection before select_extract was called.
+
+If you supply a file name as the 4th argument, the omitted records
+will be extracted to a file for later reference.
+
+If you supply a message prefix as the 5th argument, a string other
+than "WARNING" or "Note" may be specified.
+
+	# Reject with a progress message prefixed by "WARNING:"
+
+	$t->omit_warn(FirstName => sub{!length($_)}, "First name is empty");
+
+		Mon Aug 23 08:24:15 2004 WARNING: Omitting 2 of 78243 records (now 78241): First name is empty.
+
+	# Reject with a progress message prefixed by "Note:", with output to a file
+
+	$t->omit_note(FirstName => sub{!length($_)}, "First name is empty", "empty.names.txt");
+
+		Mon Aug 23 08:24:15 2004 Note: Omitting 2 of 78243 records (now 78241): First name is empty.
+		Mon Aug 23 08:24:15 2004 Writing bad.firstname.txt...
+		Mon Aug 23 08:24:15 2004 Wrote   bad.firstname.txt.
+
+	# Extract some items, leaving original selection intact
+
+	$t->select_extract(FirstName => sub{!length($_)}, "First name is empty", "empty.names.txt");
+
+		Mon Aug 23 08:24:15 2004 Note: Extracting 2 of 78243 records: First name is empty.
+
+=cut
+
+sub omit_warn
+{
+	my $this = shift;
+	my ($SelectField, $SelectSub, $Message, $DebugFile, $MessagePrefix, $ExtractFieldList) = @_;
+
+	$MessagePrefix = 'WARNING' if !defined($MessagePrefix);
+
+	$this->extract_with_message($SelectField, $SelectSub, $Message, $DebugFile, $MessagePrefix, $ExtractFieldList, 'DoOmit');
+}
+
+sub omit_note
+{
+	my $this = shift;
+	my ($SelectField, $SelectSub, $Message, $DebugFile, $MessagePrefix, $ExtractFieldList) = @_;
+
+	$MessagePrefix = 'Note' if !defined($MessagePrefix);
+
+	$this->extract_with_message($SelectField, $SelectSub, $Message, $DebugFile, $MessagePrefix, $ExtractFieldList, 'DoOmit');
+}
+
+sub select_extract
+{
+	my $this = shift;
+	my ($SelectField, $SelectSub, $Message, $DebugFile, $MessagePrefix, $ExtractFieldList) = @_;
+
+	$MessagePrefix = 'Note' if !defined($MessagePrefix);
+
+	$this->extract_with_message($SelectField, $SelectSub, $Message, $DebugFile, $MessagePrefix, $ExtractFieldList, !'DoOmit');
+}
+
+sub extract_with_message
+{
+	my $this = shift;
+	my ($SelectField, $SelectSub, $Message, $DebugFile, $MessagePrefix, $ExtractFieldList, $DoOmit) = @_;
+	
+	## Find omittable items -- save and restore the selection.
+
+	my $LengthBefore		= $this->sel_len();
+	my $SelBefore			= $this->selection();
+
+	$this->select($SelectField, $SelectSub);
+	my $OmitCount		    = $this->sel_len();
+	my $SelOmitted			= [@{$this->selection()}];
+
+	$this->selection($SelBefore);
+	
+	## If we have some, perform the omit and report on the omitted ones.
+
+	if ($OmitCount)
+	{
+        my $Sel             = $this->col_empty();       ## Start with empty mask (all entries undef).
+        @$Sel[@$SelBefore]  = @$SelBefore;              ## Mask in those in the original selection.
+        @$Sel[@$SelOmitted] = undef;                    ## Mask out those we found.
+		my $NewSel			= [grep {defined} @$Sel];
+		my $LengthAfter		= @$NewSel + 0;
+
+		## Only actually alter the table if requested.
+        $this->{_Selection} =  $NewSel if $DoOmit;		## The remaining ones are the new selection.
+		
+		$this->progress("$MessagePrefix: @{[$DoOmit ? 'Omitting' : 'Extracting']} @{[$OmitCount]} of @{[$LengthBefore]} records@{[$DoOmit ? qq{ (now $LengthAfter)} : '']}: $Message");
+		$this->write(_FileName		=> "$DebugFile", 
+					 _FDelimiter	=> "\t", 
+					 _LineEnding	=> undef,
+					 _Selection		=> $SelOmitted,
+					 ($ExtractFieldList ? 
+					  (_FieldList	=> $ExtractFieldList) : ()),
+					 ) if $DebugFile;
+	}
+	else
+	{
+		unlink $DebugFile;
+	}
+	
+	return($OmitCount);
 }
 
 =pod
