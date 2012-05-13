@@ -1,5 +1,9 @@
 Revision history for Data::CTable
 	
+1.04  2006-01-23
+
+	- Fixed bug in path logic that was preventing cacheing on cygwin.
+
 1.03  2004-11-11
 
 	- Updated version numbers in the sample subclasses.

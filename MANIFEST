@@ -30,3 +30,4 @@ test/people.tabs.txt
 test/people.unclean.tabs.txt
 test/stateabbrevs.tabs.txt
 test/stats.tabs.unix.txt
+META.yml                                 Module meta-data (added by MakeMaker)

@@ -5,7 +5,7 @@ use strict;
 
 package Data::CTable;
 
-use vars qw($VERSION);				$VERSION = '1.03';
+use vars qw($VERSION);				$VERSION = '1.04';
 
 =pod
 
@@ -7692,9 +7692,9 @@ sub path_info
 	use Config	    qw(%Config);
 	my $OSName		=  $Config{osname};
 	
-	return({sep =>':' , up =>'::'  , cur =>':'  })	if $OSName =~ /mac                  /ix;
-	return({sep =>'\\', up =>'..\\', cur =>'.\\'})	if $OSName =~ /(?<!dar)((win)|(dos))/ix;
-	return({sep =>'/' , up =>'../' , cur =>'./' })                                         ;
+    return({sep =>':' , up =>'::'  , cur =>':'  })  if $OSName =~ /mac                          /ix;
+    return({sep =>'\\', up =>'..\\', cur =>'.\\'})  if $OSName =~ /(?<!(?:dar|cyg))((win)|(dos))/ix;
+    return({sep =>'/' , up =>'../' , cur =>'./' })                                                 ;
 }
 
 sub path_is_absolute
@@ -7704,9 +7704,9 @@ sub path_is_absolute
 	use Config		qw(%Config);
 	my $OSName		=  $Config{osname};
 	
-	return($Path =~ /^[^:]/)						if $OSName =~ /mac                  /ix;
-	return($Path =~ /^(([a-z][:])|(\\\\))/i)        if $OSName =~ /(?<!dar)((win)|(dos))/ix;
-	return($Path =~ /^\//)                                                                 ;
+    return($Path =~ /^[^:]/)                        if $OSName =~ /mac                          /ix;
+    return($Path =~ /^(([a-z][:])|(\\\\))/i)        if $OSName =~ /(?<!(?:dar|cyg))((win)|(dos))/ix;
+    return($Path =~ /^\//)                                                                         ;
 }
 
 ### min and max <nostalgic sigh>
