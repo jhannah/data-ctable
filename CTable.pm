@@ -7805,11 +7805,15 @@ The Data::Table module by Yingyao Zhou & Guangzhou Zou.
 
 The perlref manual page.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Chris Thorman <chthorman@cpan.org>
 
-Copyright (c) 1995-2002 Chris Thorman.  All rights reserved.  
+Jay Hannah <jay.hannah@iinteractive.com>
+
+=head1 COPYRIGHT
+
+Copyright (c) 1995-2012 Chris Thorman.  All rights reserved.  
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
