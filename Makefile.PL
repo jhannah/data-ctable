@@ -21,6 +21,17 @@ WriteMakefile(
 				  ## 'IO::File'			=> 0, 
 				  ## 'File::Basename'	=> 0,
 				  },
+
+			  META_MERGE => {
+				   resources => {
+					   license     => 'http://dev.perl.org/licenses/',
+					   homepage    => 'http://christhorman.com/projects/perl/Data-CTable/',
+					   bugtracker  => 'https://rt.cpan.org/Public/Dist/Display.html?Name=Data-CTable',
+					   repository  => 'https://github.com/jhannah/data-ctable',
+					   # MailingList => 'makemaker@perl.org',
+			  },
+},
+
 			  PMLIBDIRS		=> ["$Mod"],
 			  clean			=> {FILES => ".AppleDouble test/.AppleDouble test/cache/* test/cache/ test/*.out* *.bak $Mod.html"},
 			  );

@@ -7789,6 +7789,14 @@ I'll review the code and add it (at my discretion).
 If you've got a module that uses, augments, or complements this one,
 let me know that, too, and I'll make appropriate mention of it.
 
+=head1 AUTHORS
+
+Chris Thorman <chthorman@cpan.org>
+
+Jay Hannah <jay.hannah@iinteractive.com>
+
+Version control and issues here: https://github.com/jhannah/data-ctable/issues
+
 =head1 SEE ALSO
 
 The Data::CTable home page:
@@ -7805,13 +7813,7 @@ The Data::Table module by Yingyao Zhou & Guangzhou Zou.
 
 The perlref manual page.
 
-=head1 AUTHORS
-
-Chris Thorman <chthorman@cpan.org>
-
-Jay Hannah <jay.hannah@iinteractive.com>
-
-=head1 COPYRIGHT
+=head1 LICENSE
 
 Copyright (c) 1995-2012 Chris Thorman.  All rights reserved.  
 
@@ -7821,4 +7823,6 @@ it under the same terms as Perl itself.
 =cut
 
 1;
+
+
 
