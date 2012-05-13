@@ -455,7 +455,7 @@ PARAMETER REFERENCE
         Mac line endings.
 
         If _LineEnding is undef when write() is called, write() will use
-        `"\n"', which yields different strings depending on the current
+        ""\n"", which yields different strings depending on the current
         runtime platform: \x0A on Unix; \x0D in MacPerl, \x0D\x0A on DOS.
 
         Otherwise, write() uses the value defined in _LineEnding, which
@@ -490,7 +490,7 @@ PARAMETER REFERENCE
     _FDelimiter ||= undef;
         _FDelimiter is the field delimiter between field names in the header
         row (if any) and also between fields in the body of the file. If
-        undef, read() will try to guess whether it is tab `"\t"' or comma
+        undef, read() will try to guess whether it is tab ""\t"" or comma
         <",">, and set this parameter accordingly. If there is only one
         field in the file, then comma is assumed by read() and will be used
         by write().
@@ -552,7 +552,7 @@ PARAMETER REFERENCE
         Merge/CSV file and might not be re-readable.
 
         When these fields are decoded on read(), encoded returns are
-        converted to `"\n"' in memory, whatever its interpretation may be on
+        converted to ""\n"" in memory, whatever its interpretation may be on
         the current platform (\x0A on Unix or DOS; \x0D on MacPerl).
 
         IMPORTANT NOTE: When these fields are encoded by write(), any
@@ -580,15 +580,15 @@ PARAMETER REFERENCE
         / octal \013 / ^K) so you should probably not ever change this
         setting.
 
-        When fields are encoded on write(), `"\n"' is converted to this
+        When fields are encoded on write(), ""\n"" is converted to this
         value. Note that different platforms use different ascii values for
-        `"\n"', which is another good reason to leave the ReturnEncoding
+        ""\n"", which is another good reason to leave the ReturnEncoding
         feature enabled when calling write().
 
         To summarize: this module likes to assume, and you should too, that
         returns in data files on disk are encoded as "\x0B", but once loaded
         into memory, they are encoded as the current platform's value of
-        `"\n"'.
+        ""\n"".
 
     _MacRomanMap = undef unless exists
         Data::CTable assumes by default that you want field data in memory
@@ -1536,7 +1536,7 @@ DATA ROWS (RECORDS)
     same thing as fieldlist_hash() when the latter is called with no
     arguments.
 
-    row_exists() returns true if `(($Num >= 0) && ($Num < $t->length()))'.
+    row_exists() returns true if "(($Num >= 0) && ($Num < $t->length()))".
 
     rows() calls row() for each row num in a list and returns a list of the
     resulting hashes.
@@ -2426,7 +2426,7 @@ READING DATA FILES
     See the full PARAMETER LIST, above, or read on for some extra details:
 
     _ReturnMap controls whether return characters encoded as ASCII 11 should
-    be mapped back to real newlines (`"\n"') when read into memory. If
+    be mapped back to real newlines (""\n"") when read into memory. If
     false, they are left as ASCII 11 characters. (default is "true")
 
     _ReturnEncoding controls the character that returns are encoded as, if
@@ -2505,21 +2505,21 @@ FILE FORMAT NOTES
 
     Fields must NOT contain unencoded returns -- that is: whatever character
     sequence is specified for _LineEnding will NEVER occur inside a field in
-    the text file; in addition, the current platform's definition of `"\n"'
+    the text file; in addition, the current platform's definition of ""\n""
     will NEVER occur; these characters if present in field data, MUST have
     been encoded to some safe character string before the file was created.
 
     Each field may OPTIONALLY be surrounded with double-quote marks.
     However, if the field data itself contains either a double-quote
-    character (`"') or the current file's field delimiter (such as tab or
+    character (""") or the current file's field delimiter (such as tab or
     comma), then the field MUST be surrounded with double-quotes.
     (Currently, all data written by Data::CTable have all field values
     surrounded by double-quotes, but a more selective policy may be used in
     the future.)
 
     If a field contains a double-quote character, then each double-quote
-    character in the field must be encoded as `""' -- i.e. each `"' in the
-    original data becomes `""' in the text file.
+    character in the field must be encoded as """" -- i.e. each """ in the
+    original data becomes """" in the text file.
 
     Data files may not mix line-ending types or field delimiter types. Once
     determined, the same endings and delimiters will be used to read the

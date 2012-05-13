@@ -101,7 +101,7 @@ $Clean =~ s/^[ \t]+//gm;
 my $Tables		= [$HTML =~ m(<TABLE.*?>(.*?)</TABLE>)gsi];
 my $Table		= (grep {/dew\s*point/i} @$Tables)[0] or die $Clean;
 
-## Clean HTML code in table to remove any JavaScript lossage.
+## Clean HTML code in table to remove any JavaScript.
 $Table			=~ s(<SCRIPT.*?>(.*?)</SCRIPT>)()gsi;
 
 ## Extract row and cell contents.  Some rows will not have all cells.

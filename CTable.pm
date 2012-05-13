@@ -5,7 +5,7 @@ use strict;
 
 package Data::CTable;
 
-use vars qw($VERSION);				$VERSION = '1.00';
+use vars qw($VERSION);				$VERSION = '1.01';
 
 =pod
 
@@ -1642,7 +1642,7 @@ sub col_rename ## ($Old => $New, [$Old => New...])
 		$this->warn("Column to be renamed does not exist: $Old"), next
 			unless	$this->col_exists($Old, $Fields);
 		
-		$this->warn("Failed to rename column $Old to $New: $New exists."), next
+		(($Old ne $New) && $this->warn("Failed to rename column $Old to $New: $New exists.")), next
 			if		$this->col_exists($New, $Fields);
 		
 		my $Col				= $this->col($Old);	## Creates if not present.
@@ -4667,6 +4667,8 @@ sub read_file		## Read, ignoring cacheing
 		((!defined($MacRomanMap) && ($LineEnding eq "\x0D")) || ## Auto
 		 ($MacRomanMap));									    ## On
 
+	$this->progress("Will convert upper-ascii characters if any, from Mac Roman to ISO 8859-1.") if $DoMacMapping;
+
 	## FieldList is usable is it is a list and has at least one entry.
 	my $FieldListValid = ((ref($FieldList) eq 'ARRAY') && @$FieldList);
 	
@@ -4689,7 +4691,7 @@ sub read_file		## Read, ignoring cacheing
 		$FDelimiter ||= guess_delimiter($_) or 
 			$this->{_ErrorMsg} = "Could not find comma or tab delimiters in $FileName.", goto done;
 		
-		## Maybe convert entire line (all records) ISO to Mac before writing it.
+		## Maybe convert entire line (all records) Mac to ISO before splitting.
 		&MacRomanToISORoman8859_1(\ $_) if $DoMacMapping;
 
 		chomp;
@@ -4768,7 +4770,7 @@ sub read_file		## Read, ignoring cacheing
 		$FDelimiter ||= guess_delimiter($_) or 
 			$this->{_ErrorMsg} = "Could not find comma or tab delimiters in $FileName.", goto done;
 		
-		## Maybe convert entire line (all records) ISO to Mac before writing it.
+		## Maybe convert entire line (all records) ISO to Mac before splitting.
 		&MacRomanToISORoman8859_1(\ $_) if $DoMacMapping;
 		
 		## Manipulate the single line of data fields into a splittable format.
@@ -5483,8 +5485,6 @@ sub write_cache
 	my $this					= shift;
 	my ($Data, $CacheFileName)	= @_;
 	
-	use Storable qw(nstore);
-	
 	$this->progress("Storing $CacheFileName...");
 	
 	my $Success = nstore($Data, $CacheFileName);
@@ -5557,6 +5557,8 @@ sub write_file		## Just write; don't worry about cacheing
 		((!defined($MacRomanMap) && ($LineEnding eq "\x0D")) || ## Auto
 		 ($MacRomanMap));									    ## On
 	
+	$this->progress("Will convert upper-ascii characters if any, from ISO-8859-1 to Mac Roman.") if $DoMacMapping;
+
 	## Default for ReturnEncoding is "\x0B" (control-K; ASCII 11)
 	$ReturnEncoding		= "\x0B"	unless length($ReturnEncoding);
 
@@ -5698,7 +5700,7 @@ sub write_file		## Just write; don't worry about cacheing
 					$LineEndQuote . 
 					$LineEnding);
 		
-		## Maybe convert entire line (all records) ISO to Mac before writing it.
+		## Maybe convert entire line (all records) Mac to ISO before writing it.
 		&ISORoman8859_1ToMacRoman(\ $Line) if $DoMacMapping;
 		
 		$OutFile->print($Line) if $HeaderRow;
