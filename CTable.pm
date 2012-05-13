@@ -4817,7 +4817,7 @@ sub read_file		## Read, ignoring cacheing
 				 s/$RetRegex/\n/g if $ReturnMap;## Restore return characters that were coded as ASCII 11 (^K)
 			 }
 			 $_;}								## Return field val after above mods.
-		split(/$regex, $_);			## Split on delimiters, killing optional surrounding quotes at same time.
+		split($regex, $_);			## Split on delimiters, killing optional surrounding quotes at same time.
 		
 		## Put the data into the vectors
 		foreach (@$FieldNums)
