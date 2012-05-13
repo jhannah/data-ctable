@@ -7795,13 +7795,13 @@ Chris Thorman <chthorman@cpan.org>
 
 Jay Hannah <jay.hannah@iinteractive.com>
 
-Version control and issues here: https://github.com/jhannah/data-ctable/issues
-
 =head1 SEE ALSO
 
-The Data::CTable home page:
+The Data::CTable home page: http://christhorman.com/projects/perl/Data-CTable/
 
-	http://christhorman.com/projects/perl/Data-CTable/
+Version control: https://github.com/jhannah/data-ctable/issues
+
+Report bugs: https://rt.cpan.org/Public/Dist/Display.html?Name=Data-CTable
 
 The implementation in CTable.pm.
 
