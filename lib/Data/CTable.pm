@@ -1039,7 +1039,7 @@ sub initialize
 
 	## Internal meta-structures
 
-   	$this->{_FieldList} ||= undef;	## List of fields; undef means all fields, alpha order
+	$this->{_FieldList} ||= undef;	## List of fields; undef means all fields, alpha order
 	$this->{_Selection} ||= undef;	## List of rec #s; undef means all records, natural order
 	$this->{_SortOrder} ||= undef;	## List of fields; undef/empty means sort by record number
 
@@ -1048,8 +1048,9 @@ sub initialize
 
 	## Miscellaneous
 
-	$this->{_ErrorMsg}  ||= "";		## Explains last read/write failure
-	$this->{_Subset}    ||= 0;		## Flag indicating subset of available fields were read
+	$this->{_ErrorMsg}     ||= "";		## Explains last read/write failure
+	$this->{_Subset}       ||= 0;		## Flag indicating subset of available fields were read
+	$this->{_IgnoreQuotes} ||= 0;
 
     $Success = 1;
   done:
@@ -1844,6 +1845,7 @@ sub clean
 	my $Sel				= $this->selection();
 	
 	foreach (@$Fields) {foreach (@{$this->col($_)}[@$Sel]) {&$Sub()}};
+   return 1;
 }
 
 sub clean_ws
@@ -4911,6 +4913,8 @@ sub read_file		## Read, ignoring cacheing
 	## Remember whether we read (and maybe will cache) a subset of available fields.
 	$this->{_Subset} = $GettingSubset || 0;
 
+	$this->{_IgnoreQuotes} = $IgnoreQuotes || 0;
+
 	## Clean out _Selection and verify _SortOrder to ensure compatibility
 	## with current _FieldList.
 	$this->read_postcheck();
@@ -4943,10 +4947,11 @@ sub read_postcheck	## Called to clean up after a successful read
 sub read_file_or_cache	## Read, cacheing if possible
 {
 	my $this		= shift;
+   $DB::single = 1;
 	my $Params		= (@_ == 1 ? {_FileName => $_[0]} : {@_});
 	
-	my($FileName, $FieldList, $CacheOnRead, $CacheExtension, $CacheSubDir) = map {$this->getparam($Params, $_)} 
-	qw(_FileName  _FieldList  _CacheOnRead  _CacheExtension  _CacheSubDir);
+	my($FileName, $FieldList, $CacheOnRead, $CacheExtension, $CacheSubDir, $IgnoreQuotes) = map {$this->getparam($Params, $_)} 
+	qw(_FileName  _FieldList  _CacheOnRead  _CacheExtension  _CacheSubDir, _IgnoreQuotes);
 
 	my $Success;
 
@@ -5058,6 +5063,7 @@ sub read_file_or_cache	## Read, cacheing if possible
 		## _FieldList element if any, but excepting the cache-only
 		## _Newline element, into $this.
 
+      $Data->{_IgnoreQuotes} = $this->{_IgnoreQuotes};
 		delete $Data->{_Newline};
 		@$this{keys %$Data} = values %$Data;
 
@@ -5134,7 +5140,7 @@ sub read_file_or_cache	## Read, cacheing if possible
 						 _LineEnding	=>	$this->{_LineEnding},
 						 _FDelimiter	=>	$this->{_FDelimiter},
 						 _HeaderRow		=>	$this->{_HeaderRow },
-						 _IgnoreQuotes	=> $this->{_IgnoreQuotes},
+						 _IgnoreQuotes	=>	$this->{_IgnoreQuotes},
 						 _Subset		=>	$this->{_Subset    },
 						 _Newline		=>	"\n",
 						 )};
@@ -5421,8 +5427,8 @@ sub write_file_and_cache	## Write, cacheing afterward if possible
 
 	my $Params			= (@_ == 1 ? {_FileName => $_[0]} : {@_});
 	
-	my($FieldList, $LineEnding, $FDelimiter, $HeaderRow, $CacheOnWrite, $CacheExtension, $CacheSubDir) = map {$this->getparam($Params, $_)} 
-	qw($FieldList  _LineEnding  _FDelimiter  _HeaderRow  _CacheOnWrite  _CacheExtension  _CacheSubDir);
+	my($FieldList, $LineEnding, $FDelimiter, $HeaderRow, $CacheOnWrite, $CacheExtension, $CacheSubDir, $IgnoreQuotes) = map {$this->getparam($Params, $_)} 
+	qw($FieldList  _LineEnding  _FDelimiter  _HeaderRow  _CacheOnWrite  _CacheExtension  _CacheSubDir  _IgnoreQuotes);
 
 	## First write the file and go to done if it failed.
 	my $WriteFileName	= $this->write_file(@_) or goto done;

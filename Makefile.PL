@@ -12,15 +12,17 @@ my $Programs_To_Install = [qw(getweather tls tshow)];
 WriteMakefile(
            NAME            => "${Top}::${Mod}",
            DISTNAME        => "${Top}-${Mod}",
-           VERSION_FROM    => "$Mod.pm",
-           ABSTRACT_FROM   => "$Mod.pm",
+           VERSION_FROM    => "lib/$Top/$Mod.pm",
+           ABSTRACT_FROM   => "lib/$Top/$Mod.pm",
            EXE_FILES       => [ map {"eg/$_"} @$Programs_To_Install ],
            PREREQ_PM       => {
               ## 'Storable'        => 0, 
               ## 'Carp'            => 0, 
               ## 'IO::File'        => 0, 
               ## 'File::Basename'  => 0,
-              },
+              Test::More => 0,
+              FindBin    => 0,
+           },
 
            META_MERGE => {
               resources => {
