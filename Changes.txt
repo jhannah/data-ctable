@@ -1,6 +1,15 @@
 Revision history for Data::CTable
-	
-1.04  2006-01-23
+
+
+1.03_02  2012-05-15 
+
+   - test.pl modernized into t/, pushed to CPAN to check for cpantesters happiness.
+
+1.03_01  2012-05-13 
+
+   - Moved to github, modernized some things, pushed to CPAN to check cpantesters happiness. 
+
+NotReleased 2006-01-23
 
 	- Fixed bug in path logic that was preventing cacheing on cygwin.
 

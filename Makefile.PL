@@ -20,8 +20,8 @@ WriteMakefile(
               ## 'Carp'            => 0, 
               ## 'IO::File'        => 0, 
               ## 'File::Basename'  => 0,
-              Test::More => 0,
-              FindBin    => 0,
+              'Test::More' => 0,
+              'FindBin'    => 0,
            },
 
            META_MERGE => {
@@ -34,7 +34,7 @@ WriteMakefile(
               },
            },
 
-           PMLIBDIRS     => ["$Mod"],
+           PMLIBDIRS     => ["lib"],
            clean         => {FILES => ".AppleDouble test/.AppleDouble test/cache/* test/cache/ test/*.out* *.bak $Mod.html"},
            );
 
