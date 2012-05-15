@@ -43,8 +43,6 @@ my $People1 = Data::CTable->new("${TestDir}people.tabs.txt") and ok(1) or die;
 ## groups...
 
 ok(test_snapshot());	## snapshot feature.
-ok(test_indexes());		## Indexes & Index hashes
-ok(test_clean());		## Cleanups
 ok(test_col());			## Getting entire columns.
 ok(test_fieldlist());	## _FieldList accessors
 ok(test_select());		## select()-related features
@@ -60,116 +58,6 @@ ok(test_subclasses());	## Testing file formats
 1;
 
 
-
-
-sub test_indexes
-{
-	return(0) unless my $t = $People1->snapshot();
-	$t->sort([qw(Last)]);
-
-	return(0) unless listeq($t->index_all('Last'), {qw(Zack 0 Bart 1 Muth 2)});
-	return(0) unless listeq($t->index_sel('Last'), {qw(Zack 0 Bart 1 Muth 2)});
-
-	return(0) unless listeq($t->hash_all('Last', 'First'), {qw(Zack Chris Bart Marco Muth Pearl)});
-	return(0) unless listeq($t->hash_sel('Last', 'First'), {qw(Zack Chris Bart Marco Muth Pearl)});
-
-	$t->omit(Last => sub {/bart/i});
-
-	return(0) unless listeq($t->index_all('Last'), {qw(Zack 0 Bart 1 Muth 2)});
-	return(0) unless listeq($t->index_sel('Last'), {qw(Zack 0        Muth 2)});
-
-	return(0) unless listeq($t->hash_all('Last', 'First'), {qw(Zack Chris Bart Marco Muth Pearl)});
-	return(0) unless listeq($t->hash_sel('Last', 'First'), {qw(Zack Chris            Muth Pearl)});
-
-	return(1);
-}
-
-sub test_clean
-{
-	my $t = Data::CTable->new("${TestDir}people.unclean.tabs.txt") or die;
-	$t->clean_ws();
-
-	return(0) unless ("@{$t->col('First')}" eq 'Chris Marco Pearl');
-	return(0) unless ("@{$t->col('Last')}"  eq 'Zack Bart Muth');
-	return(0) unless ("@{$t->col('Age')}"   eq '43 22 15');
-	return(0) unless ("@{$t->col('State')}" eq 'CA NV HI');
-
-	return(0) unless ($t->col('Statement')->[0] eq "This\n is a multi-line field.");
-	return(0) unless ($t->col('Statement')->[1] eq "I was born\nin Cleveland.");
-	return(0) unless ($t->col('Statement')->[2] eq "Aloha!");
-	
-	my $CleanMultiLine = sub {s/^\s+//gm; s/\s+$//gm};
-
-	$t->clean($CleanMultiLine);
-	
-	return(0) unless ("@{$t->col('First')}" eq 'Chris Marco Pearl');
-	return(0) unless ("@{$t->col('Last')}"  eq 'Zack Bart Muth');
-	return(0) unless ("@{$t->col('Age')}"   eq '43 22 15');
-	return(0) unless ("@{$t->col('State')}" eq 'CA NV HI');
-
-	return(0) unless ($t->col('Statement')->[0] eq "This\nis a multi-line field.");
-	return(0) unless ($t->col('Statement')->[1] eq "I was born\nin Cleveland.");
-	return(0) unless ($t->col('Statement')->[2] eq "Aloha!");
-
-	## Read table with Mac UA mapping OFF.
-	my $t1 = Data::CTable->new({_CacheOnRead=>0, _MacRomanMap=>0    }, 
-							   "${TestDir}people.mac.ua.tabs.txt") or die;
-	
-	## Read another table with Mac UA mapping set to AUTO (in this case: ON).
-	my $t2 = Data::CTable->new({_CacheOnRead=>0, _MacRomanMap=>undef}, 
-							   "${TestDir}people.mac.ua.tabs.txt") or die;
-	$t1->clean_ws();
-	$t2->clean_ws();
-
-	## Check that the unmapped ones are unmapped.
-	return(0) unless ($t1->col('Statement')->[0] eq "‚a fait dix ans.");
-	return(0) unless ($t1->col('Statement')->[1] eq "Cre par Se–or †berpfeffer.");
-	return(0) unless ($t1->col('Statement')->[2] eq "Crme glae en crote.");
-
-	## Check that the mapped ones are mapped.
-	return(0) unless ($t2->col('Statement')->[0] eq "Ça fait dix ans.");
-	return(0) unless ($t2->col('Statement')->[1] eq "Créée par Señor Überpfeffer.");
-	return(0) unless ($t2->col('Statement')->[2] eq "Crème glaçée en croûte.");
-
-	## Manually map a single value to check the UA mapping utility routines
-	my $Val = $t1->col('Statement')->[2];
-	use Data::CTable qw(MacRomanToISORoman8859_1);
-	&MacRomanToISORoman8859_1(\$Val);
-	return(0) unless ($Val eq 'Crème glaçée en croûte.');
-
-	## Manually map the unmapped table and re-check.
-	$t1->clean_mac_to_iso8859();
-	return(0) unless ($t1->col('Statement')->[0] eq "Ça fait dix ans.");
-	return(0) unless ($t1->col('Statement')->[1] eq "Créée par Señor Überpfeffer.");
-	return(0) unless ($t1->col('Statement')->[2] eq "Crème glaçée en croûte.");
-
-	## Test a conversion utility that reads a mac file and writes it as windows.
-
-	my $WinVersion = &mac_data_file_to_win("${TestDir}people.mac.ua.tabs.txt");
-	my $t3 = Data::CTable->new($WinVersion) or die;
-	$t3->clean_ws();
-	return(0) unless listeq($t2->cols(), $t3->cols());
-
-	return(1);
-}
-
-sub mac_data_file_to_win
-{
-	my ($FileName) = @_;
-	use Data::CTable;
-	my $t = Data::CTable->new($FileName);
-
-	## If file name contains "mac", change it to "win"
-
-	## Change line endings to DOS.  This also disables default
-	## _MacRomanMap behavior.
-
-	$t->{_FileName} =~ s/mac/win/i;	
-
-	my $Written = $t->write(_LineEnding=>"\x0D\x0A");
-	
-	return($Written);
-}
 
 sub test_col
 {
